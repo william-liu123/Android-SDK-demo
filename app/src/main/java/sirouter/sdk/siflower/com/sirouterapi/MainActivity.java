@@ -64,6 +64,37 @@ import sirouter.sdk.siflower.com.remotelibrary.SFUser;
 import sirouter.sdk.siflower.com.remotelibrary.SiWiFiManager;
 
 public class MainActivity extends AppCompatActivity {
+
+    public boolean flagCondition() {
+        if (flag == 0) {
+            if (mUser == null && routers != null) {
+                Toast.makeText(MainActivity.this, "用户未登录", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            if (mUser != null && routers == null) {
+                Toast.makeText(MainActivity.this, "未绑定路由器", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            progressDialog.show();
+            return true;
+        } else if (flag == 1||flag == 2) {
+            if (mUser != null&& routers != null) {
+                Toast.makeText(MainActivity.this, "连接失败", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            if (mUser == null&& routers != null) {
+                Toast.makeText(MainActivity.this, "用户未登录", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            if (mUser != null && routers == null) {
+                Toast.makeText(MainActivity.this, "未绑定路由器", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            return false;
+        }
+        return false;
+    }
+
     private EditText editText;
 
     private MainActivity mainActivity;
@@ -108,17 +139,17 @@ public class MainActivity extends AppCompatActivity {
 
 
     private static final String TAG = "mainActivity";
-    private String appKey = "3416a75f4cea9109507cacd8e2f2aefc";
-    private String appSecret = "47a581aa79d3113e145a79d4d7449a3e";
+    private int flag;
+    private String appKey = "c20ad4d76fe97759aa27a0c99bff6710";
+    private String appSecret = "864850023f299568b353d21e55c6c892";
     ProgressDialog progressDialog;
 
-    public MainActivity() {
-    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        SiWiFiManager.init(this,appKey,appSecret);
+        SiWiFiManager.init(this, appKey, appSecret);
         setContentView(R.layout.activity_main);
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle("This is ProgressDialog");
@@ -148,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
         getGatewayIp = findViewById(R.id.getGatewayIp);
 
         setFreqIntergration = findViewById(R.id.setFreqIntergration);
-        setFreqIntergration_switch=findViewById(R.id.setFreqIntergration_switch);
+        setFreqIntergration_switch = findViewById(R.id.setFreqIntergration_switch);
         setDeviceDataUsage = findViewById(R.id.setDeviceDataUsage);
         setLeaseNet = findViewById(R.id.setLeaseNet);
         setWanType = findViewById(R.id.setWanType);
@@ -156,20 +187,18 @@ public class MainActivity extends AppCompatActivity {
         setDeviceRestrict = findViewById(R.id.setDeviceRestrict);
         setCustomWiFi = findViewById(R.id.setCustomWiFi);
         setWiFi = findViewById(R.id.setWiFi);
-        setWiFiAdvance =  findViewById(R.id.setWiFiAdvance);
-
+        setWiFiAdvance = findViewById(R.id.setWiFiAdvance);
 
 
         if (mUser != null && !mUser.getLoginkey().equals("")) {
             SFUser.loginByKey(this, mUser.getLoginkey(), new SFObjectResponseListener<SFUser>() {
-
                 @Override
                 public void onSuccess(SFUser sfUser) {
                     Log.e(TAG, "login success" + new Gson().toJson(sfUser));
                     MainActivity.this.mUser = sfUser;
                     if (sfUser.getBinder() != null) {
                         if (sfUser.getBinder().size() != 0) {
-                            Log.e(TAG, "not zero"+new Gson().toJson(sfUser.getBinder()));
+                            Log.e(TAG, "not zero" + new Gson().toJson(sfUser.getBinder()));
                             routers = sfUser.getBinder().get(0);
                         }
                     }
@@ -177,49 +206,15 @@ public class MainActivity extends AppCompatActivity {
                     SiWiFiManager.getInstance().createRemoteConnection(sfUser, new RemoteConnectionListener() {
                         @Override
                         public void onConnectSuccess() {
-
-                            Log.e(TAG, "on connection success");
+                            Log.e(TAG, "on connection success" + Thread.currentThread().getName());
+//                                Toast.makeText(MainActivity.this, "on connection success", Toast.LENGTH_SHORT).show();
                         }
+
 
                         @Override
                         public void onConnectionClose(int code, String reason) {
-                            Log.e(TAG, "on connection close");
-                        }
-
-                        @Override            
-                        public void onFailure(Exception ex) {
-                            Log.e(TAG, "on Failure");
-                        }
-                    });
-                }
-
-                @Override
-                public void onError(SFException ex) {
-                    Log.e(TAG, "登录失败，请检查AppSecret和AppKey");
-                }
-            });
-        } else {
-            SFUser.loginByExtra(this, "999556", new SFObjectResponseListener<SFUser>() {
-                @Override
-                public void onSuccess(SFUser sfUser) {
-                    Log.e(TAG, "login success" + new Gson().toJson(sfUser));
-                    MainActivity.this.mUser = sfUser;
-                    if (sfUser.getBinder() != null) {
-                        if (sfUser.getBinder().size() != 0) {
-                            Log.e(TAG, "not zero"+new Gson().toJson(sfUser.getBinder()));
-                            routers = sfUser.getBinder().get(0);
-                        }
-
-                    }
-                    SiWiFiManager.getInstance().createRemoteConnection(sfUser, new RemoteConnectionListener() {
-                        @Override
-                        public void onConnectSuccess() {
-                            Log.e(TAG, "on connection success");
-                        }
-
-                        @Override
-                        public void onConnectionClose(int code, String reason) {
-                            Log.e(TAG, "on connection close");
+                            Log.e(TAG, "on connection close" + Thread.currentThread().getName());
+                            //  Toast.makeText(MainActivity.this, "on connection close", Toast.LENGTH_SHORT).show();
                         }
 
                         @Override
@@ -242,8 +237,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (mUser == null) {
+                    Toast.makeText(MainActivity.this, "用户未登录", Toast.LENGTH_SHORT).show();
                     return;
                 }
+
 
                 SiWiFiManager.getInstance().bindSiRouter(MainActivity.this, LocalApi.DEFAULT_APP_API_VERSION, mUser, new SingleObserver<BindRet>() {
                     @Override
@@ -285,14 +282,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SiWiFiManager.getInstance().getWifiObserve(routers, mUser, new SingleObserver<List<WiFiInfo>>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -302,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(List<WiFiInfo> wiFiInfos) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "wifiinfos: " + new Gson().toJson(wiFiInfos));
+                        Log.e(TAG, "wifiinfos: " + new Gson().toJson(wiFiInfos));
                         Toast.makeText(MainActivity.this, new Gson().toJson(wiFiInfos), Toast.LENGTH_SHORT).show();
 
                     }
@@ -310,7 +301,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "wifiinfos: " + e.getMessage());
+                        Log.e(TAG, "wifiinfos: " + e.getMessage());
                     }
                 });
             }
@@ -320,9 +311,44 @@ public class MainActivity extends AppCompatActivity {
         loginExtra.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String inputText = editText.getText().toString();
-                Toast.makeText(MainActivity.this, inputText, Toast.LENGTH_SHORT).show();
+                SFUser.loginByExtra(mainActivity, editText.getText().toString(), new SFObjectResponseListener<SFUser>() {
+                    @Override
+                    public void onSuccess(SFUser sfUser) {
+                        Log.e(TAG, "login success" + new Gson().toJson(sfUser));
+                        Toast.makeText(MainActivity.this,"登陆成功",Toast.LENGTH_SHORT).show();
+                        MainActivity.this.mUser = sfUser;
+                        if (sfUser.getBinder() != null) {
+                            if (sfUser.getBinder().size() != 0) {
+                                Log.e(TAG, "not zero" + new Gson().toJson(sfUser.getBinder()));
+                                routers = sfUser.getBinder().get(0);
+                            }
+                        }
+                        SiWiFiManager.getInstance().createRemoteConnection(sfUser, new RemoteConnectionListener() {
+                            @Override
+                            public void onConnectSuccess() {
+                                flag = 0;
+                                Log.e(TAG, "on connection success");
+                            }
 
+                            @Override
+                            public void onConnectionClose(int code, String reason) {
+                                flag = 1;
+                                Log.e(TAG, "on connection close");
+                            }
+
+                            @Override
+                            public void onFailure(Exception ex) {
+                                flag = 2;
+                                Log.e(TAG, "on Failure");
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(SFException ex) {
+                        Log.e(TAG, "登录失败，请检查AppSecret和AppKey");
+                    }
+                });
             }
         });
 
@@ -330,15 +356,8 @@ public class MainActivity extends AppCompatActivity {
         getCustomWiFiFace.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SiWiFiManager.getInstance().getCustomWiFiIFace(routers, mUser, new SingleObserver<GetCustomWiFiRet>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -348,14 +367,14 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(GetCustomWiFiRet getCustomWiFiRet) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "getCustomWiFiRet" + new Gson().toJson(getCustomWiFiRet));
+                        Log.e(TAG, "getCustomWiFiRet" + new Gson().toJson(getCustomWiFiRet));
                         Toast.makeText(MainActivity.this, new Gson().toJson(getCustomWiFiRet), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "getCustomWiFiRet" + e.getMessage());
+                        Log.e(TAG, "getCustomWiFiRet" + e.getMessage());
                     }
                 });
             }
@@ -365,14 +384,8 @@ public class MainActivity extends AppCompatActivity {
         getWDSInfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SiWiFiManager.getInstance().getWDSInfo(routers, mUser, new SingleObserver<List<WDSInfo>>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -382,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(List<WDSInfo> wdsInfos) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "wdsinfos: " + new Gson().toJson(wdsInfos));
+                        Log.e(TAG, "wdsinfos: " + new Gson().toJson(wdsInfos));
                         Toast.makeText(MainActivity.this, new Gson().toJson(wdsInfos), Toast.LENGTH_SHORT).show();
 
                     }
@@ -390,7 +403,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "wdsinfos: " + e.getMessage());
+                        Log.e(TAG, "wdsinfos: " + e.getMessage());
                     }
                 });
             }
@@ -400,14 +413,8 @@ public class MainActivity extends AppCompatActivity {
         getSiRouterDeviceDetail.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SiWiFiManager.getInstance().getSiRouterDeviceDetail(routers, mUser, SiWiFiManager.a.a, new SingleObserver<List<Device>>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -417,7 +424,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(List<Device> devices) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "devices: " + new Gson().toJson(devices));
+                        Log.e(TAG, "devices: " + new Gson().toJson(devices));
                         Toast.makeText(MainActivity.this, new Gson().toJson(devices), Toast.LENGTH_SHORT).show();
 
                     }
@@ -425,7 +432,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "devices: " + e.getMessage());
+                        Log.e(TAG, "devices: " + e.getMessage());
                     }
                 });
             }
@@ -435,14 +442,8 @@ public class MainActivity extends AppCompatActivity {
         getDeviceDataUsage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 GetDeviceDataUsageParam param = new GetDeviceDataUsageParam("V10");
                 param.setMac("A0_86_C6_9D_28_7D");
                 SiWiFiManager.getInstance().getDeviceDataUsage(routers, mUser, param, new SingleObserver<GetDeviceDataUsageRet>() {
@@ -454,14 +455,14 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(GetDeviceDataUsageRet getDeviceDataUsageRet) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "getDeviceDataUsageRet" + new Gson().toJson(getDeviceDataUsageRet));
+                        Log.e(TAG, "getDeviceDataUsageRet" + new Gson().toJson(getDeviceDataUsageRet));
                         Toast.makeText(MainActivity.this, new Gson().toJson(getDeviceDataUsageRet), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "getDeviceDataUsageRet" + e.getMessage());
+                        Log.e(TAG, "getDeviceDataUsageRet" + e.getMessage());
                     }
                 });
             }
@@ -471,14 +472,8 @@ public class MainActivity extends AppCompatActivity {
         getLeaseNet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SiWiFiManager.getInstance().getLeaseNet(routers, mUser, new SingleObserver<GetLeaseNetRet>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -488,14 +483,14 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(GetLeaseNetRet getLeaseNetRet) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "getLeaseNet" + new Gson().toJson(getLeaseNetRet));
+                        Log.e(TAG, "getLeaseNet" + new Gson().toJson(getLeaseNetRet));
                         Toast.makeText(MainActivity.this, new Gson().toJson(getLeaseNetRet), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "getLeaseNet" + e.getMessage());
+                        Log.e(TAG, "getLeaseNet" + e.getMessage());
                     }
                 });
             }
@@ -505,14 +500,8 @@ public class MainActivity extends AppCompatActivity {
         getWDSScan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 String band = "2.4G";
                 SiWiFiManager.getInstance().getWDSScan(routers, mUser, band, new SingleObserver<List<WDSScanInfo>>() {
                     @Override
@@ -523,14 +512,14 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(List<WDSScanInfo> wdsScanInfos) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "wdsScanInfos: " + new Gson().toJson(wdsScanInfos));
+                        Log.e(TAG, "wdsScanInfos: " + new Gson().toJson(wdsScanInfos));
                         Toast.makeText(MainActivity.this, new Gson().toJson(wdsScanInfos), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "wdsScanInfos: " + e.getMessage());
+                        Log.e(TAG, "wdsScanInfos: " + e.getMessage());
                     }
                 });
             }
@@ -540,14 +529,8 @@ public class MainActivity extends AppCompatActivity {
         getWDSRelIp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 String band = "2.4G";
                 SiWiFiManager.getInstance().getWDSRelIp(routers, mUser, band, new SingleObserver<String>() {
                     @Override
@@ -558,14 +541,14 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(String s) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "s: " + new Gson().toJson(s));
+                        Log.e(TAG, "s: " + new Gson().toJson(s));
                         Toast.makeText(MainActivity.this, new Gson().toJson(s), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "s: " + e.getMessage());
+                        Log.e(TAG, "s: " + e.getMessage());
                     }
                 });
             }
@@ -575,14 +558,8 @@ public class MainActivity extends AppCompatActivity {
         getDeviceRestrict.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 GetDeviceRestrictParam param = new GetDeviceRestrictParam("V10");
                 param.setMac("A0_86_C6_9D_28_7D");
                 SiWiFiManager.getInstance().getDeviceRestrict(routers, mUser, param, new SingleObserver<GetDeviceRestrictRet>() {
@@ -594,14 +571,14 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(GetDeviceRestrictRet getDeviceRestrictRet) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "getDeviceRestrictRet" + new Gson().toJson(getDeviceRestrictRet));
+                        Log.e(TAG, "getDeviceRestrictRet" + new Gson().toJson(getDeviceRestrictRet));
                         Toast.makeText(MainActivity.this, new Gson().toJson(getDeviceRestrictRet), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "getDeviceRestrictRet" + e.getMessage());
+                        Log.e(TAG, "getDeviceRestrictRet" + e.getMessage());
                     }
                 });
             }
@@ -611,14 +588,8 @@ public class MainActivity extends AppCompatActivity {
         getFreqIntergration.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 GetFreqIntergrationParam param = new GetFreqIntergrationParam("V17");
 
                 SiWiFiManager.getInstance().getFreqIntergration(routers, mUser, param, new SingleObserver<GetFreqIntergrationRet>() {
@@ -630,14 +601,14 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(GetFreqIntergrationRet getFreqIntergrationRet) {
                         progressDialog.dismiss();
-                        Log.d(TAG, " getFreqIntergrationRet" + new Gson().toJson(getFreqIntergrationRet));
+                        Log.e(TAG, " getFreqIntergrationRet" + new Gson().toJson(getFreqIntergrationRet));
                         Toast.makeText(MainActivity.this, new Gson().toJson(getFreqIntergrationRet), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, " getFreqIntergrationRet" + e.getMessage());
+                        Log.e(TAG, " getFreqIntergrationRet" + e.getMessage());
                     }
                 });
             }
@@ -647,26 +618,20 @@ public class MainActivity extends AppCompatActivity {
         getRouters.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SiWiFiManager.getInstance().getRouters(mUser, new SiWiFiListListener<Routers>() {
                     @Override
                     public void onSuccess(List<Routers> list) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "  getRouters" + new Gson().toJson(list));
+                        Log.e(TAG, "  getRouters" + new Gson().toJson(list));
                         Toast.makeText(MainActivity.this, new Gson().toJson(list), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(int i, String s) {
                         progressDialog.dismiss();
-                        Log.d(TAG, " getFreqIntergrationRet" + s);
+                        Log.e(TAG, " getRouters" + s);
                     }
                 });
             }
@@ -676,14 +641,8 @@ public class MainActivity extends AppCompatActivity {
         getWanTypeObserve.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SiWiFiManager.getInstance().getWanTypeObserve(routers, mUser, new SingleObserver<GetWanTypeRet>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -693,14 +652,14 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(GetWanTypeRet getWanTypeRet) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "getWanTypeRet)" + new Gson().toJson(getWanTypeRet));
+                        Log.e(TAG, "getWanTypeRet)" + new Gson().toJson(getWanTypeRet));
                         Toast.makeText(MainActivity.this, new Gson().toJson(getWanTypeRet), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "getWanTypeRet)" + e.getMessage());
+                        Log.e(TAG, "getWanTypeRet)" + e.getMessage());
                     }
                 });
             }
@@ -710,14 +669,8 @@ public class MainActivity extends AppCompatActivity {
         getWiFiAdvanceObserve.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SiWiFiManager.getInstance().getWifiAdvanceObserve(routers, mUser, new SingleObserver<List<WiFiAdvanceInfo>>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -727,7 +680,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(List<WiFiAdvanceInfo> wiFiAdvanceInfos) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "wiFiAdvanceInfos: " + new Gson().toJson(wiFiAdvanceInfos));
+                        Log.e(TAG, "wiFiAdvanceInfos: " + new Gson().toJson(wiFiAdvanceInfos));
                         Toast.makeText(MainActivity.this, new Gson().toJson(wiFiAdvanceInfos), Toast.LENGTH_SHORT).show();
 
                     }
@@ -735,7 +688,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onError(Throwable e) {
                         progressDialog.dismiss();
-                        Log.d(TAG, "wiFiAdvanceInfos: " + e.getMessage());
+                        Log.e(TAG, "wiFiAdvanceInfos: " + e.getMessage());
                     }
                 });
             }
@@ -746,33 +699,29 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (mUser == null) {
+                    Toast.makeText(MainActivity.this, "用户未登录", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
                 if (routers == null) {
+                    Toast.makeText(MainActivity.this, "未绑定路由器", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                Log.d(TAG, "getGateWayIp" + (SiWiFiManager.getInstance().getGatewayIp(mainActivity)));
+                Log.e(TAG, "getGateWayIp" + (SiWiFiManager.getInstance().getGatewayIp(mainActivity)));
                 Toast.makeText(MainActivity.this, new Gson().toJson((SiWiFiManager.getInstance().getGatewayIp(mainActivity))), Toast.LENGTH_SHORT).show();
             }
         });
 
 
+
         setFreqIntergration.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SetFreqIntergrationParam param = new SetFreqIntergrationParam("V17");
-                if(setFreqIntergration_switch.isChecked()){
+                if (setFreqIntergration_switch.isChecked()) {
                     param.setEnable(1);
-                }else {
+                } else {
                     param.setEnable(0);
                 }
                 Toast.makeText(mainActivity, "开始请求", Toast.LENGTH_SHORT).show();
@@ -800,14 +749,8 @@ public class MainActivity extends AppCompatActivity {
         setDeviceDataUsage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SetDeviceDataUsageParam param = new SetDeviceDataUsageParam("V14");
                 param.setMac("A0_86_C6_9D_28_7D");
                 List<DataUsage> list = new ArrayList<DataUsage>();
@@ -819,7 +762,7 @@ public class MainActivity extends AppCompatActivity {
                 param.setSetlist(list);
                 param.setChange(100);
                 param.setUsageenable(1);
-                SiWiFiManager.getInstance().setDeviceDataUsage(routers,mUser,param).subscribe(new SingleObserver<SetDeviceDataUsageRet>() {
+                SiWiFiManager.getInstance().setDeviceDataUsage(routers, mUser, param).subscribe(new SingleObserver<SetDeviceDataUsageRet>() {
                     @Override
                     public void onSubscribe(Disposable d) {
 
@@ -841,18 +784,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
         setLeaseNet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SetLeaseNetParam param = new SetLeaseNetParam("V14");
                 param.setEnable(true);
                 param.setSsid("liuxiaopeng-5G");
@@ -882,14 +818,8 @@ public class MainActivity extends AppCompatActivity {
         setWanType.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SetWanTypeParam param = new SetWanTypeParam("V14");
                 param.setType(0);
                 SiWiFiManager.getInstance().setWanType(routers, mUser, param, new SingleObserver<SetWanTypeRet>() {
@@ -915,17 +845,11 @@ public class MainActivity extends AppCompatActivity {
 
 
         setAdminPassword.setOnClickListener(new View.OnClickListener() {
-            String a,b;
+
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SetPasswordParam param = new SetPasswordParam("V14");
                 param.setOldpwd(setOldpwd.getText().toString());
                 param.setNewpwd(setNewpwd.getText().toString());
@@ -954,14 +878,8 @@ public class MainActivity extends AppCompatActivity {
         setDeviceRestrict.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SetDeviceRestrictParam param = new SetDeviceRestrictParam("V14");
                 param.setMac("A0_86_C6_9D_28_7D");
                 param.setSocial(0);
@@ -993,14 +911,8 @@ public class MainActivity extends AppCompatActivity {
         setCustomWiFi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SetCustomWiFiParam param = new SetCustomWiFiParam("V14");
                 List<IFace> list = new ArrayList<IFace>();
                 IFace iFace = new IFace();
@@ -1043,15 +955,9 @@ public class MainActivity extends AppCompatActivity {
         setWiFi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
-                List<WifiParam>list = new ArrayList<WifiParam>();
+                List<WifiParam> list = new ArrayList<WifiParam>();
                 WifiParam wifiParam = new WifiParam();
                 wifiParam.enable = 1;
                 wifiParam.encryption = "psk2+ccmp";
@@ -1086,15 +992,9 @@ public class MainActivity extends AppCompatActivity {
         setWiFiAdvance.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();;
-                List<SetWiFiAdvanceInfo>list = new ArrayList<SetWiFiAdvanceInfo>();
+                List<SetWiFiAdvanceInfo> list = new ArrayList<SetWiFiAdvanceInfo>();
 
                 SetWiFiAdvanceInfo param24 = new SetWiFiAdvanceInfo();
                 param24.country = "CN";
@@ -1142,15 +1042,8 @@ public class MainActivity extends AppCompatActivity {
         unbindSiRouter.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mUser == null) {
+                if(flagCondition()==false)
                     return;
-
-                }
-
-                if (routers == null) {
-                    return;
-                }
-                progressDialog.show();
                 SiWiFiManager.getInstance().unbindSiRouter(routers, mUser, new SingleObserver<UnbindRet>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -1173,4 +1066,5 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 }
+
 
